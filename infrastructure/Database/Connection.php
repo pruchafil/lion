@@ -1,5 +1,10 @@
 <?php
 
+namespace Infrastructure\Database;
+
+use PDO;
+use PDOException;
+
 function getConnection(): PDO {
     $host = $_ENV['DB_HOST'];
     $db = $_ENV['DB_DB'];
