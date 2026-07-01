@@ -75,14 +75,6 @@ final class Parcel
                 $this->geomEwkt = $value;
             }
         },
-        ?array             $rawData {
-            get {
-                return $this->rawData;
-            }
-            set {
-                $this->rawData = $value;
-            }
-        },
         \DateTimeImmutable $cachedAt {
             get {
                 return $this->cachedAt;

@@ -31,7 +31,6 @@ readonly class ParcelRepositoryImpl implements ParcelRepository
                 parcel_number,
                 area_m2,
                 ST_AsEWKT(geom) AS geom_ewkt,
-                raw_gml::text AS raw_data,
                 cached_at
             FROM parcel
             WHERE id = :id
@@ -64,7 +63,6 @@ readonly class ParcelRepositoryImpl implements ParcelRepository
                 parcel_number,
                 area_m2,
                 ST_AsEWKT(geom) AS geom_ewkt,
-                raw_gml::text AS raw_data,
                 cached_at
             FROM parcel
             WHERE cuzk_gml_id = :id
@@ -97,7 +95,6 @@ readonly class ParcelRepositoryImpl implements ParcelRepository
                 parcel_number,
                 area_m2,
                 ST_AsEWKT(geom) AS geom_ewkt,
-                raw_gml::text AS raw_data,
                 cached_at
             FROM parcel
             WHERE ku_code = :code
@@ -130,7 +127,6 @@ readonly class ParcelRepositoryImpl implements ParcelRepository
                 parcel_number,
                 area_m2,
                 ST_AsEWKT(geom) AS geom_ewkt,
-                raw_gml::text AS raw_data,
                 cached_at
             FROM parcel
             WHERE parcel_number = :parcel
@@ -161,7 +157,6 @@ readonly class ParcelRepositoryImpl implements ParcelRepository
             parcel_number,
             area_m2,
             geom,
-            raw_gml,
             cached_at
         )
         VALUES (
@@ -172,7 +167,6 @@ readonly class ParcelRepositoryImpl implements ParcelRepository
             :parcel_number,
             :area_m2,
             ST_GeomFromEWKT(:geom_ewkt),
-            :raw_gml::jsonb,
             now()
         )
         ON CONFLICT (cuzk_gml_id)
@@ -183,7 +177,6 @@ readonly class ParcelRepositoryImpl implements ParcelRepository
             parcel_number = EXCLUDED.parcel_number,
             area_m2 = EXCLUDED.area_m2,
             geom = EXCLUDED.geom,
-            raw_gml = EXCLUDED.raw_gml,
             cached_at = now()
     ");
 
@@ -194,8 +187,7 @@ readonly class ParcelRepositoryImpl implements ParcelRepository
             'ku_name' => $parcel->cadastralUnitName,
             'parcel_number' => $parcel->parcelNumber,
             'area_m2' => $parcel->areaM2,
-            'geom_ewkt' => $parcel->geomEwkt,
-            'raw_gml' => json_encode($parcel->rawData, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            'geom_ewkt' => $parcel->geomEwkt
         ]);
     }
 }
