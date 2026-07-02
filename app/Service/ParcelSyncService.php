@@ -7,4 +7,5 @@ namespace App\Service;
 interface ParcelSyncService
 {
     public function syncJicinDistrict(): void;
+    public function updateGlobalCache(): void;
 }

@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace Infrastructure\Container;
 
 use App\Controller\ParcelController;
+use App\Repository\CachedRepository;
+use App\Repository\CachedRepositoryImpl;
 use App\Repository\ParcelRepository;
 use App\Repository\ParcelRepositoryImpl;
+use App\Service\ParcelService;
+use App\Service\ParcelServiceImpl;
 use App\Service\ParcelSyncService;
 use App\Service\ParcelSyncServiceImpl;
 use DI\Container;
@@ -31,7 +35,7 @@ return function (): Container {
 
     $container->set(ParcelController::class, function (Container $c): ParcelController {
         return new ParcelController(
-            $c->get(ParcelRepository::class)
+            $c->get(ParcelService::class)
         );
     });
 
@@ -43,6 +47,20 @@ return function (): Container {
         return new ParcelSyncServiceImpl(
             $c->get(ParcelClient::class),
             $c->get(ParcelRepository::class)
+        );
+    });
+
+    $container->set(CachedRepository::class, function (Container $c): CachedRepository {
+        return new CachedRepositoryImpl(
+            $c->get(PDO::class)
+        );
+    });
+
+    $container->set(ParcelService::class, function (Container $c): ParcelService {
+        return new ParcelServiceImpl(
+            $c->get(ParcelRepository::class),
+            $c->get(ParcelSyncService::class),
+            $c->get(CachedRepository::class)
         );
     });
 

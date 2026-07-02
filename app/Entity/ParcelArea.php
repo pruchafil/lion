@@ -21,25 +21,13 @@ final class ParcelArea {
             set {
                 $this->geomEwkt = $value;
             }
-        },
-        \DateTimeImmutable $cachedAt {
-            get {
-                return $this->cachedAt;
-            }
-            set {
-                $this->cachedAt = $value;
-            }
         }
     ) { }
 
-    /**
-     * @throws DateMalformedStringException
-     */
     public static function fromDatabaseRow(array $row): self {
         return new self(
             (isset($row['id']) ? (int) $row['id'] : null),
-            $row['geom_ewkt'],
-            new \DateTimeImmutable($row['cached_at'])
+            $row['geom_ewkt']
         );
     }
 }

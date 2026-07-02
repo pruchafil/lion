@@ -11,9 +11,6 @@ readonly class ParcelRepositoryImpl implements ParcelRepository {
 
     function __construct(private PDO $pdo) { }
 
-    /**
-     * @throws DateMalformedStringException
-     */
     public function getParcelById(int $id): ?Parcel {
         $stmt = $this->pdo->prepare("
             SELECT
@@ -24,8 +21,7 @@ readonly class ParcelRepositoryImpl implements ParcelRepository {
                 ku_name,
                 parcel_number,
                 area_m2,
-                ST_AsEWKT(geom) AS geom_ewkt,
-                cached_at
+                ST_AsEWKT(geom) AS geom_ewkt
             FROM parcel
             WHERE id = :id
         ");
@@ -54,8 +50,7 @@ readonly class ParcelRepositoryImpl implements ParcelRepository {
                 ku_name,
                 parcel_number,
                 area_m2,
-                ST_AsEWKT(geom) AS geom_ewkt,
-                cached_at
+                ST_AsEWKT(geom) AS geom_ewkt
             FROM parcel
             WHERE cuzk_gml_id = :id
         ");
@@ -84,8 +79,7 @@ readonly class ParcelRepositoryImpl implements ParcelRepository {
                 ku_name,
                 parcel_number,
                 area_m2,
-                ST_AsEWKT(geom) AS geom_ewkt,
-                cached_at
+                ST_AsEWKT(geom) AS geom_ewkt
             FROM parcel
             WHERE ku_code = :code
         ");
@@ -114,8 +108,7 @@ readonly class ParcelRepositoryImpl implements ParcelRepository {
                 ku_name,
                 parcel_number,
                 area_m2,
-                ST_AsEWKT(geom) AS geom_ewkt,
-                cached_at
+                ST_AsEWKT(geom) AS geom_ewkt
             FROM parcel
             WHERE parcel_number = :parcel
         ");
@@ -140,8 +133,7 @@ readonly class ParcelRepositoryImpl implements ParcelRepository {
             ku_name,
             parcel_number,
             area_m2,
-            geom,
-            cached_at
+            geom
         )
         VALUES (
             :gml_id,
@@ -150,8 +142,7 @@ readonly class ParcelRepositoryImpl implements ParcelRepository {
             :ku_name,
             :parcel_number,
             :area_m2,
-            ST_GeomFromEWKT(:geom_ewkt),
-            now()
+            ST_GeomFromEWKT(:geom_ewkt)
         )
         ON CONFLICT (cuzk_gml_id)
         DO UPDATE SET
@@ -160,8 +151,7 @@ readonly class ParcelRepositoryImpl implements ParcelRepository {
             ku_name = EXCLUDED.ku_name,
             parcel_number = EXCLUDED.parcel_number,
             area_m2 = EXCLUDED.area_m2,
-            geom = EXCLUDED.geom,
-            cached_at = now()
+            geom = EXCLUDED.geom
     ");
 
         $stmt->execute([
@@ -175,15 +165,11 @@ readonly class ParcelRepositoryImpl implements ParcelRepository {
         ]);
     }
 
-    /**
-     * @throws DateMalformedStringException
-     */
     public function getArea(float $minX, float $minY, float $maxX, float $maxY): array {
         $stmt = $this->pdo->prepare("
             SELECT
                 id,
-                ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom_ewkt,
-                cached_at
+                ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom_ewkt
             FROM parcel
             WHERE geom && ST_Transform(ST_MakeEnvelope($minX, $minY, $maxX, $maxY, 4326), 5514)
             LIMIT 200
@@ -198,5 +184,14 @@ readonly class ParcelRepositoryImpl implements ParcelRepository {
         }
 
         return $areas;
+    }
+
+    public function deleteParcelByGlmId(string $gmlId): void {
+        $stmt = $this->pdo->prepare("
+            DELETE FROM parcel
+            WHERE cuzk_gml_id = :gml_id
+        ");
+
+        $stmt->execute(['gml_id' => $gmlId]);
     }
 }

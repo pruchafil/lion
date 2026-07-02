@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Repository\ParcelRepository;
+use App\Service\ParcelService;
 use JsonException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -12,7 +13,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 final readonly class ParcelController
 {
     public function __construct(
-        private ParcelRepository $parcelRepository
+        private ParcelService $parcelService
     ) {
     }
 
@@ -20,7 +21,7 @@ final readonly class ParcelController
      * @throws JsonException
      */
     public function getById(Request $request, Response $response, array $args): Response {
-        $data = $this->parcelRepository->getParcelById((int) $args['id']);
+        $data = $this->parcelService->getParcelById((int) $args['id']);
 
         return $this->json($response, $data);
     }
@@ -47,7 +48,7 @@ final readonly class ParcelController
             $bbox[] = (float) $value;
         }
 
-        $areas = $this->parcelRepository->getArea($bbox[0], $bbox[1], $bbox[2], $bbox[3]);
+        $areas = $this->parcelService->getArea($bbox[0], $bbox[1], $bbox[2], $bbox[3]);
 
         $features = [];
         foreach ($areas as $area) {

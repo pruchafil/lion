@@ -74,14 +74,6 @@ final class Parcel
             set {
                 $this->geomEwkt = $value;
             }
-        },
-        \DateTimeImmutable $cachedAt {
-            get {
-                return $this->cachedAt;
-            }
-            set {
-                $this->cachedAt = $value;
-            }
         }
     ) { }
 
@@ -93,13 +85,11 @@ final class Parcel
             'cadastralUnitCode' => $this->cadastralUnitCode,
             'cadastralUnitName' => $this->cadastralUnitName,
             'parcelNumber' => $this->parcelNumber,
-            'areaM2' => $this->areaM2,
-            'cachedAt' => $this->cachedAt->format(DATE_ATOM)
+            'areaM2' => $this->areaM2
         ];
     }
 
     /**
-     * @throws DateMalformedStringException
      */
     public static function fromDatabaseRow(array $row): self {
         return new self(
@@ -110,8 +100,7 @@ final class Parcel
                 $row['ku_name'] ?? null,
                 $row['parcel_number'] ?? null,
                 $row['area_m2'] != null ? (float)$row['area_m2'] : null,
-            $row['geom_ewkt'],
-            new DateTimeImmutable($row['cached_at'])
+            $row['geom_ewkt']
         );
     }
 }
