@@ -21,6 +21,20 @@ $app = AppFactory::create();
 $app->addRoutingMiddleware();
 $app->addErrorMiddleware(true, true, true);
 
-$app->get('/', [ParcelController::class, 'index']);
+$app->add(function ($request, $handler) {
+    $response = $handler->handle($request);
+
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', 'http://localhost:3000')
+        ->withHeader('Access-Control-Allow-Headers', 'Content-Type')
+        ->withHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+});
+
+$app->options('/{routes:.+}', function ($request, $response) {
+    return $response;
+});
+
+$app->get('/parcel/{id}', [ParcelController::class, 'getById']);
+$app->get('/parcel', [ParcelController::class, 'getArea']);
 
 $app->run();
