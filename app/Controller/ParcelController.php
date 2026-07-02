@@ -19,9 +19,8 @@ final readonly class ParcelController
     /**
      * @throws JsonException
      */
-    public function index(Request $request, Response $response): Response
-    {
-        $data = $this->parcelRepository->getParcelById(1);
+    public function getById(Request $request, Response $response, array $args): Response {
+        $data = $this->parcelRepository->getParcelById((int) $args['id']);
 
         return $this->json($response, $data);
     }
@@ -29,8 +28,47 @@ final readonly class ParcelController
     /**
      * @throws JsonException
      */
-    private function json(Response $response, mixed $data, int $status = 200): Response
-    {
+    public function getArea(Request $request, Response $response, array $args): Response {
+        $area = $request->getQueryParams()['area'];
+
+        if ($area === null) {
+            return $response->withStatus(400);
+        }
+
+        $arr = explode(',', $area);
+
+        if (count($arr) !== 4) {
+            return $response->withStatus(400);
+        }
+
+        $bbox = [];
+
+        foreach ($arr as $value) {
+            $bbox[] = (float) $value;
+        }
+
+        $areas = $this->parcelRepository->getArea($bbox[0], $bbox[1], $bbox[2], $bbox[3]);
+
+        $features = [];
+        foreach ($areas as $area) {
+            $features[] = [
+                'type' => 'Feature',
+                'geometry' => json_decode($area->geomEwkt, true),
+                'properties' => [
+                    'id' => (int)$area->id,
+                    'cachedAt' => $area->CachedAt
+                ]
+            ];
+        }
+
+
+        return $this->json($response, ['type' => 'FeatureCollection', 'features' => $features]);
+    }
+
+    /**
+     * @throws JsonException
+     */
+    private function json(Response $response, mixed $data, int $status = 200): Response {
         $response->getBody()->write(json_encode(
             $data,
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE

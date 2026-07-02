@@ -85,8 +85,7 @@ final class Parcel
         }
     ) { }
 
-    public function toArray(): array
-    {
+    public function toArray(): array {
         return [
             'id' => $this->id,
             'gmlId' => $this->gmlId,
@@ -101,20 +100,17 @@ final class Parcel
 
     /**
      * @throws DateMalformedStringException
-     * @throws JsonException
      */
-    public static function fromDatabaseRow(array $row): self
-    {
+    public static function fromDatabaseRow(array $row): self {
         return new self(
             (isset($row['id']) ? (int) $row['id'] : null),
-            $row['gml_id'],
+            $row['cuzk_gml_id'],
                 $row['national_cadastral_reference'] ?? null,
-                $row['cadastral_unit_code'] ?? null,
-                $row['cadastral_unit_name'] ?? null,
+                $row['ku_code'] ?? null,
+                $row['ku_name'] ?? null,
                 $row['parcel_number'] ?? null,
-                $row['area_m2'] ?? null,
+                $row['area_m2'] != null ? (float)$row['area_m2'] : null,
             $row['geom_ewkt'],
-            (isset($row['raw_data']) ? json_decode($row['raw_data'], true, 512, JSON_THROW_ON_ERROR) : null),
             new DateTimeImmutable($row['cached_at'])
         );
     }

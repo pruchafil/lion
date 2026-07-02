@@ -6,16 +6,15 @@ namespace Infrastructure\Cuzk;
 
 use App\Entity\Parcel;
 use DateTimeImmutable;
+use Exception;
 use SimpleXMLElement;
 
-final readonly class ParcelXmlParser
-{
+final readonly class ParcelXmlParser {
     /**
      * @return Parcel[]
-     * @throws \Exception
+     * @throws Exception
      */
-    public function parse(string $xml): array
-    {
+    public function parse(string $xml): array {
         $root = new SimpleXMLElement($xml);
 
         $root->registerXPathNamespace('wfs', 'http://www.opengis.net/wfs/2.0');
@@ -71,8 +70,7 @@ final readonly class ParcelXmlParser
         return $parcels;
     }
 
-    private function text(SimpleXMLElement $node, string $path): ?string
-    {
+    private function text(SimpleXMLElement $node, string $path): ?string {
         $result = $node->xpath($path);
 
         if ($result === false || count($result) === 0) {
@@ -84,8 +82,7 @@ final readonly class ParcelXmlParser
         return $value !== '' ? $value : null;
     }
 
-    private function posListToEwktPolygon(string $posList): string
-    {
+    private function posListToEwktPolygon(string $posList): string {
         $numbers = preg_split('/\s+/', trim($posList));
 
         if ($numbers === false || count($numbers) < 6 || count($numbers) % 2 !== 0) {

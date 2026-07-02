@@ -3,24 +3,18 @@
 namespace App\Repository;
 
 use App\Entity\Parcel;
-use DateTimeImmutable;
-use JsonException;
+use App\Entity\ParcelArea;
 use DateMalformedStringException;
 use PDO;
 
-readonly class ParcelRepositoryImpl implements ParcelRepository
-{
+readonly class ParcelRepositoryImpl implements ParcelRepository {
 
-    function __construct(private PDO $pdo)
-    {
-    }
+    function __construct(private PDO $pdo) { }
 
     /**
      * @throws DateMalformedStringException
-     * @throws JsonException
      */
-    public function getParcelById(int $id): ?Parcel
-    {
+    public function getParcelById(int $id): ?Parcel {
         $stmt = $this->pdo->prepare("
             SELECT
                 id,
@@ -49,10 +43,8 @@ readonly class ParcelRepositoryImpl implements ParcelRepository
 
     /**
      * @throws DateMalformedStringException
-     * @throws JsonException
      */
-    public function getParcelByGlmId(string $gmlId): ?Parcel
-    {
+    public function getParcelByGlmId(string $gmlId): ?Parcel {
         $stmt = $this->pdo->prepare("
             SELECT
                 id,
@@ -81,10 +73,8 @@ readonly class ParcelRepositoryImpl implements ParcelRepository
 
     /**
      * @throws DateMalformedStringException
-     * @throws JsonException
      */
-    public function getParcelByCadastralUnitCode(string $cadastralUnitCode): ?Parcel
-    {
+    public function getParcelByCadastralUnitCode(string $cadastralUnitCode): ?Parcel {
         $stmt = $this->pdo->prepare("
             SELECT
                 id,
@@ -113,10 +103,8 @@ readonly class ParcelRepositoryImpl implements ParcelRepository
 
     /**
      * @throws DateMalformedStringException
-     * @throws JsonException
      */
-    public function getParcelByParcelNumber(string $parcelNumber): ?Parcel
-    {
+    public function getParcelByParcelNumber(string $parcelNumber): ?Parcel {
         $stmt = $this->pdo->prepare("
             SELECT
                 id,
@@ -143,11 +131,7 @@ readonly class ParcelRepositoryImpl implements ParcelRepository
         return Parcel::fromDatabaseRow($row);
     }
 
-    /**
-     * @throws JsonException
-     */
-    public function upsertParcel(Parcel $parcel): void
-    {
+    public function upsertParcel(Parcel $parcel): void {
         $stmt = $this->pdo->prepare("
         INSERT INTO parcel (
             cuzk_gml_id,
@@ -189,5 +173,30 @@ readonly class ParcelRepositoryImpl implements ParcelRepository
             'area_m2' => $parcel->areaM2,
             'geom_ewkt' => $parcel->geomEwkt
         ]);
+    }
+
+    /**
+     * @throws DateMalformedStringException
+     */
+    public function getArea(float $minX, float $minY, float $maxX, float $maxY): array {
+        $stmt = $this->pdo->prepare("
+            SELECT
+                id,
+                ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom_ewkt,
+                cached_at
+            FROM parcel
+            WHERE geom && ST_Transform(ST_MakeEnvelope($minX, $minY, $maxX, $maxY, 4326), 5514)
+            LIMIT 200
+        ");
+
+        $stmt->execute();
+
+        $areas = [];
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $areas[] = ParcelArea::fromDatabaseRow($row);
+        }
+
+        return $areas;
     }
 }
