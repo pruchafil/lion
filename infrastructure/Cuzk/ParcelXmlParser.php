@@ -26,42 +26,113 @@ final readonly class ParcelXmlParser {
         $parcels = [];
 
         foreach ($root->xpath('//wfs:member/cp:CadastralParcel') as $node) {
-            $parcels[] = $this->parseParcel($node);
+            $node->registerXPathNamespace('cp', 'http://inspire.ec.europa.eu/schemas/cp/4.0');
+            $node->registerXPathNamespace('gml', 'http://www.opengis.net/gml/3.2');
+            $node->registerXPathNamespace('xlink', 'http://www.w3.org/1999/xlink');
+
+            $gmlAttributes = $node->attributes('http://www.opengis.net/gml/3.2');
+            $gmlId = (string) $gmlAttributes['id'];
+
+            $area = $this->text($node, 'cp:areaValue');
+            $label = $this->text($node, 'cp:label');
+            $nationalReference = $this->text($node, 'cp:nationalCadastralReference');
+
+            $zoning = $node->xpath('cp:zoning')[0] ?? null;
+            $zoningAttributes = $zoning?->attributes('http://www.w3.org/1999/xlink');
+
+            $kuName = $zoningAttributes ? (string) $zoningAttributes['title'] : null;
+            $kuCode = null;
+
+            if ($zoningAttributes && preg_match('/Id=CZ\.([0-9]+)/', (string) $zoningAttributes['href'], $m)) {
+                $kuCode = $m[1];
+            }
+
+            $posList = $this->text($node, 'cp:geometry/gml:Polygon/gml:exterior/gml:LinearRing/gml:posList');
+
+            if ($posList === null || $posList === '') {
+                continue;
+            }
+
+            $geomEwkt = $this->posListToEwktPolygon($posList);
+
+            $parcels[] = new Parcel(
+                null,
+                $gmlId,
+                $nationalReference,
+                $kuCode,
+                $kuName,
+                $label,
+                $area !== null ? (float) $area : null,
+                $geomEwkt
+            );
         }
 
         return $parcels;
     }
 
-    /**
-     * @throws Exception
-     */
     public function parseZoning(string $xml): array {
         $xmlElement = simplexml_load_string($xml);
+
+        if ($xmlElement === false) {
+            return [];
+        }
 
         $xmlElement->registerXPathNamespace('wfs', 'http://www.opengis.net/wfs/2.0');
         $xmlElement->registerXPathNamespace('cp', 'http://inspire.ec.europa.eu/schemas/cp/4.0');
         $xmlElement->registerXPathNamespace('gml', 'http://www.opengis.net/gml/3.2');
 
-        $zoning = $xmlElement->xpath('//wfs:member/cp:CadastralZoning');
+        $zones = $xmlElement->xpath('//wfs:member/cp:CadastralZoning');
 
-        if ($zoning === false) {
+        if ($zones === false) {
             return [];
         }
 
-        $gmlIds = [];
+        $result = [];
 
-        foreach ($zoning as $zone) {
-            $attributes = $zone->attributes('gml', true);
-            $gmlId = (string) ($attributes['id'] ?? '');
+        foreach ($zones as $zone) {
+            $zone->registerXPathNamespace('cp', 'http://inspire.ec.europa.eu/schemas/cp/4.0');
+            $zone->registerXPathNamespace('gml', 'http://www.opengis.net/gml/3.2');
 
-            if ($gmlId === '') {
+            $codeNode = $zone->xpath('cp:nationalCadastalZoningReference')[0] ?? null;
+            $nameNode = $zone->xpath('cp:label')[0] ?? null;
+            $posListNode = $zone->xpath('.//gml:posList')[0] ?? null;
+
+            if ($codeNode === null || $nameNode === null || $posListNode === null) {
                 continue;
             }
 
-            $gmlIds[] = $gmlId;
+            [$minX, $minY, $maxX, $maxY] = $this->bboxFromPosList((string) $posListNode);
+
+            $result[] = [
+                'code' => (string) $codeNode,
+                'name' => (string) $nameNode,
+                'minX' => $minX,
+                'minY' => $minY,
+                'maxX' => $maxX,
+                'maxY' => $maxY,
+            ];
         }
 
-        return array_values(array_unique($gmlIds));
+        return $result;
+    }
+
+    private function bboxFromPosList(string $posList): array {
+        $values = preg_split('/\s+/', trim($posList));
+
+        $xs = [];
+        $ys = [];
+
+        for ($i = 0; $i < count($values); $i += 2) {
+            $xs[] = (float) $values[$i];
+            $ys[] = (float) $values[$i + 1];
+        }
+
+        return [
+            min($xs),
+            min($ys),
+            max($xs),
+            max($ys),
+        ];
     }
 
     /**
@@ -120,34 +191,6 @@ final readonly class ParcelXmlParser {
         );
     }
 
-
-    /**
-     * @return array{float, float, float, float}
-     */
-    private function bboxFromPosList(string $posList): array
-    {
-        $numbers = preg_split('/\s+/', trim($posList));
-
-        if ($numbers === false || count($numbers) < 4 || count($numbers) % 2 !== 0) {
-            throw new \RuntimeException('Invalid zoning posList.');
-        }
-
-        $xs = [];
-        $ys = [];
-
-        for ($i = 0; $i < count($numbers); $i += 2) {
-            $xs[] = (float) $numbers[$i];
-            $ys[] = (float) $numbers[$i + 1];
-        }
-
-        return [
-            min($xs),
-            min($ys),
-            max($xs),
-            max($ys),
-        ];
-    }
-
     private function text(SimpleXMLElement $node, string $path): ?string {
         $result = $node->xpath($path);
 
@@ -164,7 +207,7 @@ final readonly class ParcelXmlParser {
         $numbers = preg_split('/\s+/', trim($posList));
 
         if ($numbers === false || count($numbers) < 6 || count($numbers) % 2 !== 0) {
-            throw new \RuntimeException('Invalid gml:posList.');
+            throw new RuntimeException('Invalid gml:posList.');
         }
 
         $points = [];
@@ -179,6 +222,4 @@ final readonly class ParcelXmlParser {
 
         return 'SRID=5514;POLYGON((' . implode(',', $points) . '))';
     }
-
-
 }

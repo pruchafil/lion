@@ -194,4 +194,45 @@ readonly class ParcelRepositoryImpl implements ParcelRepository {
 
         $stmt->execute(['gml_id' => $gmlId]);
     }
+
+    public function deleteMissingInBbox(
+        string $kuCode,
+        float $minX,
+        float $minY,
+        float $maxX,
+        float $maxY,
+        array $currentGmlIds
+    ): void {
+        if ($currentGmlIds === []) {
+            return;
+        }
+
+        $placeholders = [];
+
+        foreach ($currentGmlIds as $i => $_) {
+            $placeholders[] = ':gml_' . $i;
+        }
+
+        $sql = "
+            DELETE FROM parcel
+            WHERE ku_code = :ku_code
+            AND geom && ST_MakeEnvelope(:min_x, :min_y, :max_x, :max_y, 5514)
+            AND cuzk_gml_id NOT IN (" . implode(',', $placeholders) . ")
+        ";
+
+        $params = [
+            'ku_code' => $kuCode,
+            'min_x' => $minX,
+            'min_y' => $minY,
+            'max_x' => $maxX,
+            'max_y' => $maxY,
+        ];
+
+        foreach ($currentGmlIds as $i => $gmlId) {
+            $params['gml_' . $i] = $gmlId;
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+    }
 }
