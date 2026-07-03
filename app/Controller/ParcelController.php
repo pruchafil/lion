@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Repository\ParcelRepository;
+use App\DTO\ParcelDto;
 use App\Service\ParcelService;
 use JsonException;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -23,7 +23,7 @@ final readonly class ParcelController
     public function getById(Request $request, Response $response, array $args): Response {
         $data = $this->parcelService->getParcelById((int) $args['id']);
 
-        return $this->json($response, $data);
+        return $this->json($response, ParcelDto::fromParcel($data));
     }
 
     /**

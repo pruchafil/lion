@@ -8,72 +8,71 @@ use DateMalformedStringException;
 use DateTimeImmutable;
 use JsonException;
 
-final class Parcel
-{
+final class Parcel {
     public function __construct(
         ?int               $id {
             get {
                 return $this->id;
             }
-            set {
-                $this->id = $value;
-            }
+set {
+    $this->id = $value;
+}
         },
         string             $gmlId {
-            get {
+get {
                 return $this->gmlId;
             }
             set {
-                $this->gmlId = $value;
-            }
+    $this->gmlId = $value;
+}
         },
         ?string            $nationalCadastralReference {
-            get {
+get {
                 return $this->nationalCadastralReference;
             }
             set {
-                $this->nationalCadastralReference = $value;
-            }
+    $this->nationalCadastralReference = $value;
+}
         },
         ?string            $cadastralUnitCode {
-            get {
+get {
                 return $this->cadastralUnitCode;
             }
             set {
-                $this->cadastralUnitCode = $value;
-            }
+    $this->cadastralUnitCode = $value;
+}
         },
         ?string            $cadastralUnitName {
-            get {
+get {
                 return $this->cadastralUnitName;
             }
             set {
-                $this->cadastralUnitName = $value;
-            }
+    $this->cadastralUnitName = $value;
+}
         },
         ?string            $parcelNumber {
-            get {
+get {
                 return $this->parcelNumber;
             }
             set {
-                $this->parcelNumber = $value;
-            }
+    $this->parcelNumber = $value;
+}
         },
         ?float             $areaM2 {
-            get {
+get {
                 return $this->areaM2;
             }
             set {
-                $this->areaM2 = $value;
-            }
+    $this->areaM2 = $value;
+}
         },
         string             $geomEwkt {
-            get {
+get {
                 return $this->geomEwkt;
             }
             set {
-                $this->geomEwkt = $value;
-            }
+    $this->geomEwkt = $value;
+}
         }
     ) { }
 
