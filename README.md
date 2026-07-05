@@ -30,3 +30,5 @@ time is limited to 200.
 - 11h 5m - BE
 - 1h     - FE
 - 1h 30m - Docs
+
+To keep things simple, I didn’t use Docker at all for this task and committed all changes directly to the Main branch (which is, of course, not a suitable approach for collaborative work). The most time-consuming part was getting familiar with the documentation, finding the correct endpoints, and parsing the resulting XML into the database. I decided on an approach where I first download the current status of parcels in the Jičín district and then continuously update only the most recent changes. I eventually simplified this approach so that the database is updated only once every 30 days, regardless of how often it is viewed.
